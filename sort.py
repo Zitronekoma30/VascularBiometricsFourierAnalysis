@@ -1,16 +1,21 @@
 import numpy as np
-import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
-import os
+from scipy.fftpack import fft2, ifft2, fftshift, ifftshift
+from scipy.signal import gaussian
+from skimage import io, color
 
-PATH_REAL = ''
-PATH_FAKE = ''
-PATH_SORT = ''
+PATH_REAL = './Images/Real'
+PATH_FAKE = './Images/Fake'
+PATH_SORT = './Images/Unsorted'
 
 def convert_all_img_dir(path):
     out = []
     for filename in os.listdir(path):
-        out.append(mpimg.imread(os.path.join(path, filename)))
+        img = io.imread(os.path.join(path, filename)) # load image
+        img = color.rgb2gray(img) # make grayscale
+        img_fft = fft2(img) # get fourier transform of image
+        img_fft_centered = np.abs(fftshift(img_fft)) # shift 0 frequency to center
+        out.append(img_fft_centered)
 
 def get_image_diff(img1, img2):
         return np.abs(img1) - np.abs(img2)
