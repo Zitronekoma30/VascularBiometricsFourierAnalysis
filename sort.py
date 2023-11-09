@@ -8,6 +8,10 @@ PATH_REAL = './Images/Real'
 PATH_FAKE = './Images/Fake'
 PATH_SORT = './Images/Unsorted'
 
+def mean_squared_error(img1_fft, img2_fft):
+    magnitude_difference = np.abs(img1_fft) - np.abs(img2_fft)
+    return np.mean(np.square(magnitude_difference))
+
 def bandpass_filter(shape, low_cutoff, high_cutoff):
     rows, cols = shape
     crow, ccol = rows // 2 , cols // 2
@@ -33,9 +37,6 @@ def convert_all_img_dir(path):
         img_fft = fft2(img) # get fourier transform of image
         img_fft_centered = np.abs(fftshift(img_fft)) # shift 0 frequency to center
         out.append(img_fft_centered)
-
-def get_image_diff(img1, img2):
-        return np.abs(img1) - np.abs(img2)
 
 def populate_initial(path_real, path_fake, path_sort):
     # populate lists
