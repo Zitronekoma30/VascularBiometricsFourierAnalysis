@@ -8,6 +8,23 @@ PATH_REAL = './Images/Real'
 PATH_FAKE = './Images/Fake'
 PATH_SORT = './Images/Unsorted'
 
+def bandpass_filter(shape, low_cutoff, high_cutoff):
+    rows, cols = shape
+    crow, ccol = rows // 2 , cols // 2
+
+    # Create a mask with ones in the band and zeros elsewhere
+    mask = np.zeros((rows, cols))
+    mask[int(crow)-high_cutoff:int(crow)+high_cutoff, int(ccol)-high_cutoff:int(ccol)+high_cutoff] = 1
+    mask[int(crow)-low_cutoff:int(crow)+low_cutoff, int(ccol)-low_cutoff:int(ccol)+low_cutoff] = 0
+
+    return mask
+
+def apply_bandpass_filter(img_fft, low_cutoff, high_cutoff):
+    rows, cols = img_fft.shape
+    mask = bandpass_filter((rows, cols), low_cutoff, high_cutoff)
+    img_fft_filtered = img_fft * mask
+    return img_fft_filtered
+
 def convert_all_img_dir(path):
     out = []
     for filename in os.listdir(path):
