@@ -1,12 +1,13 @@
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 from scipy.fftpack import fft2, ifft2, fftshift, ifftshift
 from scipy.signal import gaussian
 from skimage import io, color
 
-PATH_REAL = './Images/Real'
-PATH_FAKE = './Images/Fake'
-PATH_SORT = './Images/Unsorted'
+PATH_REAL = './Images/genuine'
+PATH_FAKE = './Images/spoofed'
+PATH_SORT = './Images/unsorted'
 
 def mean_squared_error(img1_fft, img2_fft):
     magnitude_difference = np.abs(img1_fft) - np.abs(img2_fft)
@@ -31,7 +32,7 @@ def apply_bandpass_filter(img_fft, low_cutoff, high_cutoff):
 
 def get_usable_fft(path):
     img = io.imread(path) # load image
-    img = color.rgb2gray(img) # make grayscale
+    #img = color.rgb2gray(img) # make grayscale
     img_fft = fft2(img) # get fourier transform of image
     img_fft_centered = np.abs(fftshift(img_fft)) # shift 0 frequency to center
     return img_fft_centered
@@ -39,7 +40,9 @@ def get_usable_fft(path):
 def convert_all_img_dir(path):
     out = []
     for filename in os.listdir(path):
-        out.append(get_usable_fft(os.path.join(path, filename)))
+        img = get_usable_fft(os.path.join(path, filename))
+        out.append(img)
+    return out    
 
 def populate_initial(path_real, path_fake, path_sort):
     # populate lists
@@ -61,11 +64,31 @@ def main(real, fake, sort):
 #if __name__ == "__main__":
 #    main(*populate_initial(PATH_REAL, PATH_FAKE, PATH_SORT))
 
-img1 = get_usable_fft("./Images/Image1.png")
-img1 = apply_bandpass_filter(img1, 50, 100)
-# visualize
-vis = img1
-plt.imshow(np.log(1 + np.abs(vis)), cmap='gray')
-plt.colorbar()
-plt.title("Magnitude Difference")
-plt.show()
+imgs_real = convert_all_img_dir("./Images/genuine")
+imgs_fake = convert_all_img_dir("./Images/spoofed")
+img_sort_real = get_usable_fft("./Images/unsorted/017-PLUS-FV3-Laser_PALMAR_001_01_09_02.png")
+
+real_mse = []
+fake_mse = []
+
+for img in imgs_real:
+    real_mse.append(mean_squared_error(img_sort_real, img))
+
+for img in imgs_fake:
+    fake_mse.append(mean_squared_error(img_sort_real, img))
+
+real_average_mse = sum(real_mse) / len(real_mse)
+fake_average_mse = sum(fake_mse) / len(fake_mse)
+
+print(f"real: {real_average_mse}")
+print(f"fake: {fake_average_mse}")
+
+print(min(real_mse))
+print(min(fake_mse))
+
+#  visualize
+#vis = apply_bandpass_filter(img_sort_real, 30, 70)
+#plt.imshow(np.log(1 + np.abs(vis)), cmap='gray')
+#plt.colorbar()
+#plt.title("Magnitude Difference")
+#plt.show()
