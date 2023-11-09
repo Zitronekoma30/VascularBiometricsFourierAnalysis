@@ -29,14 +29,17 @@ def apply_bandpass_filter(img_fft, low_cutoff, high_cutoff):
     img_fft_filtered = img_fft * mask
     return img_fft_filtered
 
+def get_usable_fft(path):
+    img = io.imread(path) # load image
+    img = color.rgb2gray(img) # make grayscale
+    img_fft = fft2(img) # get fourier transform of image
+    img_fft_centered = np.abs(fftshift(img_fft)) # shift 0 frequency to center
+    return img_fft_centered
+
 def convert_all_img_dir(path):
     out = []
     for filename in os.listdir(path):
-        img = io.imread(os.path.join(path, filename)) # load image
-        img = color.rgb2gray(img) # make grayscale
-        img_fft = fft2(img) # get fourier transform of image
-        img_fft_centered = np.abs(fftshift(img_fft)) # shift 0 frequency to center
-        out.append(img_fft_centered)
+        out.append(get_usable_fft(os.path.join(path, filename)))
 
 def populate_initial(path_real, path_fake, path_sort):
     # populate lists
@@ -55,5 +58,14 @@ def main(real, fake, sort):
     # how good / consistent the algorithm is. 
     pass
 
-if __name__ == "__main__":
-    main(*populate_initial(PATH_REAL, PATH_FAKE, PATH_SORT))
+#if __name__ == "__main__":
+#    main(*populate_initial(PATH_REAL, PATH_FAKE, PATH_SORT))
+
+img1 = get_usable_fft("./Images/Image1.png")
+img1 = apply_bandpass_filter(img1, 50, 100)
+# visualize
+vis = img1
+plt.imshow(np.log(1 + np.abs(vis)), cmap='gray')
+plt.colorbar()
+plt.title("Magnitude Difference")
+plt.show()
