@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.fftpack import fft2, ifft2, fftshift, ifftshift
 from scipy.signal import gaussian
 from skimage import io, color
+from multiprocessing import Pool
 
 PATH_REAL = './Images/genuine'
 PATH_FAKE = './Images/spoofed'
@@ -52,7 +53,9 @@ def populate_initial(path_real, path_fake, path_sort):
     return real, fake, sort
 
 def main(path_real, path_fake, path_sort, k):
+    print("converting images")
     real, fake, sort = populate_initial(path_real, path_fake, path_sort)
+    print("sorting images")
     print(knn_sort(real, fake, sort, k))
 
     # TODO implement reversing the process, using the now sorted "sort images"
@@ -60,6 +63,19 @@ def main(path_real, path_fake, path_sort, k):
     # how many real / fake images end up in the correct category will determine
     # how good / consistent the algorithm is. 
 
+def calculate_mse_for_image(args):
+    i = 0
+    images, intervals, unsorted_img, sort_bands = args
+    mse_list = []
+    for img in images:
+        for interval in intervals:
+            band = apply_bandpass_filter(img, interval[0], interval[1])
+            sort_band = sort_bands[intervals.index(interval)]
+            mse = mean_squared_error(band, sort_band)
+            print(f"{i}/{len(images)*len(intervals)}")
+            i += 1
+            mse_list.append(mse)
+    return mse_list
 
 def knn_sort(real, fake, sort, k=5) -> bool:
     '''Sorts images into real or fake based on k nearest neighbors, returns true if real false if fake'''
@@ -67,12 +83,8 @@ def knn_sort(real, fake, sort, k=5) -> bool:
     #generate "bands" amount of intervals from 0 to 300
     interval_size = 300 // bands
     intervals = [(i * interval_size, (i+1) * interval_size) for i in range(bands)]
-    
-    real_mse = []
-    fake_mse = []
 
     sort_bands = []
-
 
     #loop over all images to be sorted
     for unsorted_img in sort:
@@ -83,30 +95,14 @@ def knn_sort(real, fake, sort, k=5) -> bool:
             sort_band = apply_bandpass_filter(unsorted_img, interval[0], interval[1])
             sort_bands.append(sort_band)
 
-        #loop over all real images
-        for real_img in real:
-            print(f"{real_i}/{len(real)}")
-            real_i += 1
-            #calculate mean squared error for every band
-            for interval in intervals:
-                real_band = apply_bandpass_filter(real_img, interval[0], interval[1])
-                sort_band_index = intervals.index(interval)
-                sort_band = sort_bands[sort_band_index]
-                mse = mean_squared_error(real_band, sort_band)
-                real_mse.append(mse)
+        #with Pool() as p:
+        #    real_mse = p.map(calculate_mse_for_image, [(img, intervals, unsorted_img, sort_bands) for img in real])
+        #    fake_mse = p.map(calculate_mse_for_image, [(img, intervals, unsorted_img, sort_bands) for img in fake])
+        
+        #loop over all images
+        real_mse = calculate_mse_for_image((real, intervals, unsorted_img, sort_bands))
+        fake_mse = calculate_mse_for_image((fake, intervals, unsorted_img, sort_bands))
 
-        #loop over all fake images
-        for fake_img in fake:
-            print(f"{fake_i}/{len(fake)}")
-            fake_i += 1
-            #calculate mean squared error for every band
-            for interval in intervals:
-                fake_band = apply_bandpass_filter(fake_img, interval[0], interval[1])
-                sort_band_index = intervals.index(interval)
-                sort_band = sort_bands[sort_band_index]
-                mse = mean_squared_error(fake_band, sort_band)
-                fake_mse.append(mse)
-            
         #sort mse lists
         real_mse.sort()
         fake_mse.sort()
@@ -117,19 +113,22 @@ def knn_sort(real, fake, sort, k=5) -> bool:
 
         #calculate average mse for real images
         real_average_mse = sum(real_k) / len(real_k)
+        print(f"real: {real_average_mse}")
+
         #calculate average mse for fake images
         fake_average_mse = sum(fake_k) / len(fake_k)
+        print(f"fake: {fake_average_mse}")
 
         # compare average mse for real and fake images
         if real_average_mse < fake_average_mse:
             #append to real
             real.append(unsorted_img)
-            return true
+            return True
 
         if fake_average_mse < real_average_mse:
             #append to fake
             fake.append(unsorted_img)
-            return false
+            return False
         # TODO handle case where real_average_mse == fake_average_mse, ask Prof for a good way to handle this.
         
         
