@@ -79,6 +79,7 @@ def calculate_mse_for_image(args):
 
 def knn_sort(real, fake, sort, k=5) -> bool:
     '''Sorts images into real or fake based on k nearest neighbors, returns true if real false if fake'''
+    # TODO change implementation to nearest neighbour instead of average
     bands = 5
     #generate "bands" amount of intervals from 0 to 300
     interval_size = 300 // bands
@@ -129,6 +130,7 @@ def knn_sort(real, fake, sort, k=5) -> bool:
             #append to fake
             fake.append(unsorted_img)
             return False
+        
         # TODO handle case where real_average_mse == fake_average_mse, ask Prof for a good way to handle this.
         
         
