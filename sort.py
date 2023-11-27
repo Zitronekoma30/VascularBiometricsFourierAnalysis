@@ -132,39 +132,13 @@ def knn_sort(real, fake, sort, k=5) -> bool:
             return False
         
         # TODO handle case where real_average_mse == fake_average_mse, ask Prof for a good way to handle this.
-        
+
+def visualize(fft):
+    plt.imshow(np.log(1 + np.abs(fft)), cmap='gray')
+    plt.colorbar()
+    plt.title("Magnitude Difference")
+    plt.show()
         
 
 print("start")
 main(PATH_REAL, PATH_FAKE, PATH_SORT, 15)
-
-
-
-#imgs_real = convert_all_img_dir("./Images/genuine")
-#imgs_fake = convert_all_img_dir("./Images/spoofed")
-#img_sort_real = get_usable_fft("./Images/unsorted/017-PLUS-FV3-Laser_PALMAR_001_01_09_02.png")
-
-#real_mse = []
-#fake_mse = []
-#
-#for img in imgs_real:
-#    real_mse.append(mean_squared_error(img_sort_real, img))
-#
-#for img in imgs_fake:
-#    fake_mse.append(mean_squared_error(img_sort_real, img))
-#
-#real_average_mse = sum(real_mse) / len(real_mse)
-#fake_average_mse = sum(fake_mse) / len(fake_mse)
-#
-#print(f"real: {real_average_mse}")
-#print(f"fake: {fake_average_mse}")
-#
-#print(min(real_mse))
-#print(min(fake_mse))
-
-#  visualize
-#vis = apply_bandpass_filter(img_sort_real, 150, 200)
-#plt.imshow(np.log(1 + np.abs(vis)), cmap='gray')
-#plt.colorbar()
-#plt.title("Magnitude Difference")
-#plt.show()
