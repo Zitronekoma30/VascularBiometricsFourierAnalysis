@@ -18,13 +18,14 @@ def apply_bandpass_filter(image, low_cutoff, high_cutoff):
     rows, cols = image.shape
     center_x, center_y = rows // 2, cols // 2
 
-    # Create a rectangular bandpass filter
-    bandpass_filter = np.zeros((rows, cols))
-    for x in range(rows):
-        for y in range(cols):
-            distance = np.sqrt((x - center_x)**2 + (y - center_y)**2)
-            if low_cutoff <= distance <= high_cutoff:
-                bandpass_filter[x, y] = 1
+    # Create a grid of coordinates
+    x, y = np.ogrid[:rows, :cols]
+
+    # Calculate the distance from the center for each coordinate
+    distance_from_center = np.sqrt((x - center_x)**2 + (y - center_y)**2)
+
+    # Create the bandpass filter
+    bandpass_filter = (low_cutoff <= distance_from_center) & (distance_from_center <= high_cutoff)
 
     # Apply the bandpass filter to the image
     filtered_image = image * bandpass_filter
@@ -33,7 +34,8 @@ def apply_bandpass_filter(image, low_cutoff, high_cutoff):
 
 def get_usable_fft(path):
     img = io.imread(path) # load image
-    #img = color.rgb2gray(img) # make grayscale
+    if len(img.shape) == 3:
+        img = color.rgb2gray(img) # make grayscale
     img_fft = fft2(img) # get fourier transform of image
     img_fft_centered = np.abs(fftshift(img_fft)) # shift 0 frequency to center
     return img_fft_centered
