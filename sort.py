@@ -8,7 +8,7 @@ from multiprocessing import Pool
 
 PATH_REAL = './Images/genuine'
 PATH_FAKE = './Images/spoofed'
-PATH_SORT = './Images/unsorted'
+PATH_SORT = './Images/sort'
 
 def mean_squared_error(img1_fft, img2_fft):
     magnitude_difference = np.abs(img1_fft) - np.abs(img2_fft)
@@ -82,7 +82,7 @@ def calculate_mse_for_image(args):
 def knn_sort(real, fake, sort, k=5) -> bool:
     '''Sorts images into real or fake based on k nearest neighbors, returns true if real false if fake'''
     # TODO change implementation to nearest neighbour instead of average
-    bands = 5
+    bands = 30
     #generate "bands" amount of intervals from 0 to 300
     interval_size = 300 // bands
     intervals = [(i * interval_size, (i+1) * interval_size) for i in range(bands)]
@@ -109,31 +109,36 @@ def knn_sort(real, fake, sort, k=5) -> bool:
         #sort mse lists
         real_mse.sort()
         fake_mse.sort()
-        
-        #get k lowest mse values
-        real_k = real_mse[:k]
-        fake_k = fake_mse[:k]
 
-        #calculate average mse for real images
-        real_average_mse = sum(real_k) / len(real_k)
-        print(f"real: {real_average_mse}")
+        # incorrect knn gives correct result
+        # Calculate the total MSE for the real and fake images
+        total_real_mse = sum(real_mse)
+        total_fake_mse = sum(fake_mse)
 
-        #calculate average mse for fake images
-        fake_average_mse = sum(fake_k) / len(fake_k)
-        print(f"fake: {fake_average_mse}")
-
-        # compare average mse for real and fake images
-        if real_average_mse < fake_average_mse:
-            #append to real
+        # Classify the image based on the total MSE
+        if total_real_mse < total_fake_mse:
             real.append(unsorted_img)
             return True
-
-        if fake_average_mse < real_average_mse:
-            #append to fake
+        else:
             fake.append(unsorted_img)
             return False
-        
-        # TODO handle case where real_average_mse == fake_average_mse, ask Prof for a good way to handle this.
+
+        # proper knn gives wrong result
+        #real_i = 0
+        #fake_i = 0
+#
+        #while real_i + fake_i < k:
+        #    if real_mse[real_i] < fake_mse[fake_i]:
+        #        real_i += 1
+        #    else:
+        #        fake_i += 1
+#
+        #if real_i > fake_i:
+        #    real.append(unsorted_img)
+        #    return True
+        #else:
+        #    fake.append(unsorted_img)
+        #    return False
 
 def visualize(fft):
     plt.imshow(np.log(1 + np.abs(fft)), cmap='gray')
@@ -143,4 +148,4 @@ def visualize(fft):
         
 
 print("start")
-main(PATH_REAL, PATH_FAKE, PATH_SORT, 15)
+main(PATH_REAL, PATH_FAKE, PATH_SORT, 5)
