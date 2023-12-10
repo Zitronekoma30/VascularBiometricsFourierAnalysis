@@ -1,4 +1,5 @@
 /opencv
 
 *.png
+*.bmp
 *.zip
