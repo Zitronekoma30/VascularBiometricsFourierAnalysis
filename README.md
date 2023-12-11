@@ -5,36 +5,35 @@ Abschlusspräsentation:
 
 ------------------------------------------------------------------------------------------------------
 
-30.10.
-Bandpassfilter -> Ring -> Koeffizient ->
-Mittelwert/Abweichung/Energie/Histogramme -> in verschiedenen 
-Bändern (Radien) mit Magnitude der Fourier Transform
+30.10. <br/>
+Bandpassfilter -> Ring -> Koeffizient -> Mittelwert/Abweichung/Energie/Histogramme <br/>
+-> in verschiedenen Bändern (Radien) mit Magnitude der Fourier Transform
 
 Bis nächstes Mal mit verschiedenen Filtern 
 
 ------------------------------------------------------------------------------------------------------
 
-13.11.
-Bandpassfilter an Bilder anpassen (nicht quadratisch)
-Ob Abweichung passt erst bei größeren Experimenten sichtbar
-Mehr als drei Bänder
-Bis nächstes Mal in KNN -> und erste Ergebnisse
+13.11. <br/>
+Bandpassfilter an Bilder anpassen (nicht quadratisch) <br/>
+Ob Abweichung passt erst bei größeren Experimenten sichtbar <br/>
+Mehr als drei Bänder <br/>
+Bis nächstes Mal in KNN -> und erste Ergebnisse <br/>
 Bei Featurevektor alles in einen Vektor, aber schauen, wie passt
 
 ------------------------------------------------------------------------------------------------------
 
-27.11.
-KNN umschreiben (Scikit? -> LeaveOneOut)
-Energie statt Abweichung!!! (Summe von n² von Koeffizienten) im Band
-Synthetische einberechnen
-Genuine vs Spoof im Ergebnis
+27.11. <br/>
+KNN umschreiben (Scikit? -> LeaveOneOut) <br/>
+Energie statt Abweichung!!! (Summe von n² von Koeffizienten) im Band <br/>
+Synthetische einberechnen <br/>
+Genuine vs Spoof im Ergebnis <br/>
 Bis zum nächsten Mal: eine Datenbank mit synth. vergleichen
 
 ------------------------------------------------------------------------------------------------------
 
-11.12.
-Bei quadratischen synthetischen Bildern Größe anpassen (Python Code von Prof)
-Scikit KNN!
+11.12. <br/>
+Bei quadratischen synthetischen Bildern Größe anpassen (Python Code von Prof) <br/>
+Scikit KNN! <br/>
 Nächster Schritt: LeaveOutOut -> LeaveOneSubjectOut/LeaveOnePersonOut Cross Validation
 	-> Keine Bilder von dieser Person in Trainingsdaten!
 
