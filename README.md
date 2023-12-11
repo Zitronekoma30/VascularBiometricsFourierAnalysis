@@ -38,7 +38,7 @@ Nächster Schritt: LeaveOutOut -> LeaveOneSubjectOut/LeaveOnePersonOut Cross Val
 	-> Keine Bilder von dieser Person in Trainingsdaten!
 
 1. Genuine vs Spoofed
-2. Genuine vs Synthetisch
+2. Genuine vs Synthetisch\
 Ziel: Genuine + Synthetisch -> Spoofed erkennen
 
 Bis 08.01. alle Daten -> Auswertungen
