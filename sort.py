@@ -149,3 +149,5 @@ def visualize(fft):
 
 print("start")
 main(PATH_REAL, PATH_FAKE, PATH_SORT, 5)
+
+# TODO leave out all of one subjects images when testing another image of that subject
