@@ -110,9 +110,7 @@ def knn_sort(real, fake, sort, k=5) -> bool:
 
         # loop over all images to be sorted
         for unsorted_img in sort.get(subject_id):
-            real_i = 0
-            fake_i = 0
-
+            # generate bandpass filters for each interval
             for interval in intervals:
                 sort_band = apply_bandpass_filter(unsorted_img, interval[0], interval[1])
                 sort_bands.append(sort_band)
