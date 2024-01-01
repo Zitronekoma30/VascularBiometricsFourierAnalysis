@@ -41,10 +41,16 @@ def get_usable_fft(path):
     return img_fft_centered
 
 def convert_all_img_dir(path):
-    out = []
+    '''returns a dict: key = subject id, value = list of images'''
+    out = {} # dictionary (subject id, [images...])
+
     for filename in os.listdir(path):
+        id = get_subject_id(path, filename)
+        if out.get(id) == None:
+            out[id] = []
         img = get_usable_fft(os.path.join(path, filename))
-        out.append(img)
+        out.get(id).append(img)
+    
     return out    
 
 def populate_initial(path_real, path_fake, path_sort):
@@ -89,56 +95,64 @@ def knn_sort(real, fake, sort, k=5) -> bool:
 
     sort_bands = []
 
-    #loop over all images to be sorted
-    for unsorted_img in sort:
-        real_i = 0
-        fake_i = 0
+    # loop over all subjects in the unsorted images
+    for subject_id in sort:
+        real_images = []
+        fake_images = []
 
-        for interval in intervals:
-            sort_band = apply_bandpass_filter(unsorted_img, interval[0], interval[1])
-            sort_bands.append(sort_band)
+        for subject in real:
+            if subject != subject_id:
+                real_images += real.get(subject)
 
-        #with Pool() as p:
-        #    real_mse = p.map(calculate_mse_for_image, [(img, intervals, unsorted_img, sort_bands) for img in real])
-        #    fake_mse = p.map(calculate_mse_for_image, [(img, intervals, unsorted_img, sort_bands) for img in fake])
-        
-        #loop over all images
-        real_mse = calculate_mse_for_image((real, intervals, unsorted_img, sort_bands))
-        fake_mse = calculate_mse_for_image((fake, intervals, unsorted_img, sort_bands))
+        for subject in fake:
+            if subject != subject_id:
+                fake_images += fake.get(subject)
 
-        #sort mse lists
-        real_mse.sort()
-        fake_mse.sort()
+        # loop over all images to be sorted
+        for unsorted_img in sort.get(subject_id):
+            real_i = 0
+            fake_i = 0
 
-        # incorrect knn gives correct result
-        # Calculate the total MSE for the real and fake images
-        total_real_mse = sum(real_mse)
-        total_fake_mse = sum(fake_mse)
+            for interval in intervals:
+                sort_band = apply_bandpass_filter(unsorted_img, interval[0], interval[1])
+                sort_bands.append(sort_band)
 
-        # Classify the image based on the total MSE
-        if total_real_mse < total_fake_mse:
-            real.append(unsorted_img)
-            return True
-        else:
-            fake.append(unsorted_img)
-            return False
+            #with Pool() as p:
+            #    real_mse = p.map(calculate_mse_for_image, [(img, intervals, unsorted_img, sort_bands) for img in real])
+            #    fake_mse = p.map(calculate_mse_for_image, [(img, intervals, unsorted_img, sort_bands) for img in fake])
+            
+            #loop over all images
+            real_mse = calculate_mse_for_image((real_images, intervals, unsorted_img, sort_bands))
+            fake_mse = calculate_mse_for_image((fake_images, intervals, unsorted_img, sort_bands))
 
-        # proper knn gives wrong result
-        #real_i = 0
-        #fake_i = 0
-#
-        #while real_i + fake_i < k:
-        #    if real_mse[real_i] < fake_mse[fake_i]:
-        #        real_i += 1
-        #    else:
-        #        fake_i += 1
-#
-        #if real_i > fake_i:
-        #    real.append(unsorted_img)
-        #    return True
-        #else:
-        #    fake.append(unsorted_img)
-        #    return False
+            #sort mse lists
+            real_mse.sort()
+            fake_mse.sort()
+
+            # incorrect knn gives correct result
+            # Calculate the average MSE for the real and fake images
+            total_real_mse = sum(real_mse) / len(real_mse)
+            total_fake_mse = sum(fake_mse) / len(fake_mse)
+
+            # Classify the image based on the total MSE
+            if total_real_mse < total_fake_mse:
+                if real.get(subject_id) == None:
+                    real[subject_id] = []
+                real.get(subject_id).append(unsorted_img)
+                return True  # TODO remove return
+            else:
+                if fake.get(subject_id) == None:
+                    fake[subject_id] = []
+                fake.get(subject_id).append(unsorted_img)
+                return False # TODO remove return
+
+def get_subject_id(path, filename):
+    ### HOW TO FIND THE SUBJECT ID ###
+    # SCUT FVD: ID_finger_session_shot_light.bmp / ID identifies the subject
+    # IDIAP Vera FV: <size>/<source>/<subject-id>-<gender>/<subject-id>_<side>_<trial>
+    # PLUSVein-FV3: [scanner name]_[DORSAL/PALMAR]_[session ID]_[user ID]_[finger ID]_[image ID].png
+
+    return filename # TODO find subject based on path and which dataset is being used.
 
 def visualize(fft):
     plt.imshow(np.log(1 + np.abs(fft)), cmap='gray')
