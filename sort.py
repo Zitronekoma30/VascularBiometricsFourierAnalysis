@@ -61,16 +61,6 @@ def populate_initial(path_real, path_fake, path_sort):
     sort = convert_all_img_dir(path_sort)
     return real, fake, sort
 
-def main(path_real, path_fake, path_sort, k):
-    print("converting images")
-    real, fake, sort = populate_initial(path_real, path_fake, path_sort)
-    print("sorting images")
-    print(knn_sort(real, fake, sort, k))
-
-    # TODO implement reversing the process, using the now sorted "sort images"
-    # for reference and instead sorting the real and fake images.
-    # how many real / fake images end up in the correct category will determine
-    # how good / consistent the algorithm is. 
 
 def calculate_mse_for_image(args):
     i = 0
@@ -159,13 +149,23 @@ def visualize(fft):
     plt.title("Magnitude Difference")
     plt.show()
         
-
 def resize_image(img, img_width, img_height):
     method = cv2.INTER_LANCZOS4
     cv2.resize(img, dsize=(img_width, img_height), interpolation=method)
 
+### MAIN ###
 
-print("start")
-main(PATH_REAL, PATH_FAKE, PATH_SORT, 5)
+def main(path_real, path_fake, path_sort, k):
+    print("converting images")
+    real, fake, sort = populate_initial(path_real, path_fake, path_sort)
+    print("sorting images")
+    print(knn_sort(real, fake, sort, k))
 
-# TODO leave out all of one subjects images when testing another image of that subject
+    # TODO implement reversing the process, using the now sorted "sort images"
+    # for reference and instead sorting the real and fake images.
+    # how many real / fake images end up in the correct category will determine
+    # how good / consistent the algorithm is. 
+
+if __name__ == "__main__":
+    print("start")
+    main(PATH_REAL, PATH_FAKE, PATH_SORT, 5)
