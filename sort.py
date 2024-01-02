@@ -5,6 +5,7 @@ from scipy.fftpack import fft2, ifft2, fftshift, ifftshift
 from scipy.signal import gaussian
 from skimage import io, color
 from multiprocessing import Pool
+import cv2
 
 PATH_REAL = './Images/genuine'
 PATH_FAKE = './Images/spoofed'
@@ -158,6 +159,11 @@ def visualize(fft):
     plt.title("Magnitude Difference")
     plt.show()
         
+
+def resize_image(img, img_width, img_height):
+    method = cv2.INTER_LANCZOS4
+    cv2.resize(img, dsize=(img_width, img_height), interpolation=method)
+
 
 print("start")
 main(PATH_REAL, PATH_FAKE, PATH_SORT, 5)
