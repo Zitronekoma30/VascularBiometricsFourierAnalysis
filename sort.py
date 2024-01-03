@@ -142,16 +142,16 @@ def get_subject_id(path, filename):
     # PLUSVein-FV3: [scanner name]_[DORSAL/PALMAR]_[session ID]_[user ID]_[finger ID]_[image ID].png
     subject_id = filename
 
-    if path.contains("SCUT"):
+    if "SCUT" in path:
         subject_id = filename.split("_")[0]
         # remove anything before a "-" since sometimes there is a leading 001, 002, etc. follwed by a "-" before the subject id
         subject_id = subject_id.split("-")
         subject_id = subject_id[len(subject_id) - 1]
 
-    elif path.contains("IDIAP"):
+    elif "IDIAP" in path:
         # TODO this one is different in some folders, need to write function to detect which pattern is used
         subject_id = filename.split("_")[2]
-    elif path.contains("PLUS"):
+    elif "PLUS" in path:
         subject_id = filename.split("_")[3]
 
     return filename # TODO find subject based on path and which dataset is being used.
