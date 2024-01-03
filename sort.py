@@ -140,6 +140,19 @@ def get_subject_id(path, filename):
     # SCUT FVD: ID_finger_session_shot_light.bmp / ID identifies the subject
     # IDIAP Vera FV: <size>/<source>/<subject-id>-<gender>/<subject-id>_<side>_<trial>
     # PLUSVein-FV3: [scanner name]_[DORSAL/PALMAR]_[session ID]_[user ID]_[finger ID]_[image ID].png
+    subject_id = filename
+
+    if path.contains("SCUT"):
+        subject_id = filename.split("_")[0]
+        # remove anything before a "-" since sometimes there is a leading 001, 002, etc. follwed by a "-" before the subject id
+        subject_id = subject_id.split("-")
+        subject_id = subject_id[len(subject_id) - 1]
+
+    elif path.contains("IDIAP"):
+        # TODO this one is different in some folders, need to write function to detect which pattern is used
+        subject_id = filename.split("_")[2]
+    elif path.contains("PLUS"):
+        subject_id = filename.split("_")[3]
 
     return filename # TODO find subject based on path and which dataset is being used.
 
