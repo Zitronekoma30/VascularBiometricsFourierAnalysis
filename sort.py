@@ -15,6 +15,9 @@ def mean_squared_error(img1_fft, img2_fft):
     magnitude_difference = np.abs(img1_fft) - np.abs(img2_fft)
     return np.mean(np.square(magnitude_difference))
 
+def band_energy(img_fft):
+    return np.sum(img_fft)
+
 def apply_bandpass_filter(image, low_cutoff, high_cutoff):
     rows, cols = image.shape
     center_x, center_y = rows // 2, cols // 2
@@ -46,11 +49,12 @@ def convert_all_img_dir(path):
     out = {} # dictionary (subject id, [images...])
 
     for filename in os.listdir(path):
-        id = get_subject_id(path, filename)
-        if out.get(id) == None:
-            out[id] = []
-        img = get_usable_fft(os.path.join(path, filename))
-        out.get(id).append(img)
+        if filename != ".DS_Store":
+            id = get_subject_id(path, filename)
+            if out.get(id) == None:
+                out[id] = []
+            img = get_usable_fft(os.path.join(path, filename))
+            out.get(id).append(img)
     
     return out    
 
@@ -61,20 +65,42 @@ def populate_initial(path_real, path_fake, path_sort):
     sort = convert_all_img_dir(path_sort)
     return real, fake, sort
 
+# def calculate_mse_for_image(args):
+#     i = 0
+#     images, intervals, unsorted_img, sort_bands = args
+#     mse_list = []
+#     for img in images:
+#         for interval in intervals:
+#             band = apply_bandpass_filter(img, interval[0], interval[1])
+#             sort_band = sort_bands[intervals.index(interval)]
+#             mse = mean_squared_error(band, sort_band)
+#             print(f"{i}/{len(images)*len(intervals)}")
+#             i += 1
+#             mse_list.append(mse)
+#     return mse_list
 
-def calculate_mse_for_image(args):
+def calculate_energy_for_image(args):
     i = 0
     images, intervals, unsorted_img, sort_bands = args
-    mse_list = []
+    energy_list = []
     for img in images:
         for interval in intervals:
             band = apply_bandpass_filter(img, interval[0], interval[1])
-            sort_band = sort_bands[intervals.index(interval)]
-            mse = mean_squared_error(band, sort_band)
+            energy = band_energy(band)
             print(f"{i}/{len(images)*len(intervals)}")
             i += 1
-            mse_list.append(mse)
-    return mse_list
+            energy_list.append(energy)
+    return energy_list
+
+def calculate_energy_unsorted(image, intervals):
+    i = 0
+    energy_list = []
+    for interval in intervals:
+        band = apply_bandpass_filter(image, interval[0], interval[1])
+        energy = band_energy(band)
+        i += 1
+        energy_list.append(energy)
+    return energy_list
 
 def knn_sort(real, fake, sort, k=5) -> bool:
     '''Sorts images into real or fake based on k nearest neighbors, returns true if real false if fake'''
@@ -110,30 +136,66 @@ def knn_sort(real, fake, sort, k=5) -> bool:
             #    real_mse = p.map(calculate_mse_for_image, [(img, intervals, unsorted_img, sort_bands) for img in real])
             #    fake_mse = p.map(calculate_mse_for_image, [(img, intervals, unsorted_img, sort_bands) for img in fake])
             
-            #loop over all images
-            real_mse = calculate_mse_for_image((real_images, intervals, unsorted_img, sort_bands))
-            fake_mse = calculate_mse_for_image((fake_images, intervals, unsorted_img, sort_bands))
+            ### MEAN SQUARED ERROR
+            # #loop over all images
+            # real_mse = calculate_mse_for_image((real_images, intervals, unsorted_img, sort_bands))
+            # fake_mse = calculate_mse_for_image((fake_images, intervals, unsorted_img, sort_bands))
 
-            #sort mse lists
-            real_mse.sort()
-            fake_mse.sort()
+            # #sort mse lists
+            # real_mse.sort()
+            # fake_mse.sort()
 
-            # incorrect knn gives correct result
-            # Calculate the average MSE for the real and fake images
-            total_real_mse = sum(real_mse) / len(real_mse)
-            total_fake_mse = sum(fake_mse) / len(fake_mse)
+            # # incorrect knn gives correct result
+            # # Calculate the average MSE for the real and fake images
+            # total_real_mse = sum(real_mse) / len(real_mse)
+            # total_fake_mse = sum(fake_mse) / len(fake_mse)
 
-            # Classify the image based on the total MSE
-            if total_real_mse < total_fake_mse:
+            # # Classify the image based on the total MSE
+            # if total_real_mse < total_fake_mse:
+            #     if real.get(subject_id) == None:
+            #         real[subject_id] = []
+            #     real.get(subject_id).append(unsorted_img)
+            #     return True  # TODO remove return
+            # else:
+            #     if fake.get(subject_id) == None:
+            #         fake[subject_id] = []
+            #     fake.get(subject_id).append(unsorted_img)
+            #     return False # TODO remove return
+            
+            ### ENERGY
+            # loop over images
+            real_energy = calculate_energy_for_image((real_images, intervals, unsorted_img, sort_bands))
+            fake_energy = calculate_energy_for_image((fake_images, intervals, unsorted_img, sort_bands))
+            real_energy.sort()
+            fake_energy.sort()
+
+            # Avg Energy
+            real_energy_total = sum(real_energy) / len(real_energy)
+            fake_energy_total = sum(fake_energy) / len(fake_energy)
+
+            # Unsorted Image Energy
+            unsorted_energy = calculate_energy_unsorted(unsorted_img, intervals)
+            unsorted_energy.sort()
+            unsorted_energy_total = sum(unsorted_energy) / len(unsorted_energy)
+
+            print(f"real: {real_energy_total}")
+            print(f"fake: {fake_energy_total}")
+            print(f"sort: {unsorted_energy_total}")
+
+            # Classification
+            diff_real = abs(unsorted_energy_total - real_energy_total)
+            diff_fake = abs(unsorted_energy_total - fake_energy_total)
+
+            if diff_real < diff_fake:
                 if real.get(subject_id) == None:
                     real[subject_id] = []
                 real.get(subject_id).append(unsorted_img)
-                return True  # TODO remove return
+                return True
             else:
                 if fake.get(subject_id) == None:
                     fake[subject_id] = []
                 fake.get(subject_id).append(unsorted_img)
-                return False # TODO remove return
+                return False
 
 def get_subject_id(path, filename):
     ### HOW TO FIND THE SUBJECT ID ###
