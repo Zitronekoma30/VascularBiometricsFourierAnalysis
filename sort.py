@@ -151,6 +151,11 @@ def knn_sort(real, fake, sort, k=5) -> bool:
             # #loop over all images
             # real_mse = calculate_mse_for_image((real_images, intervals, unsorted_img, sort_bands))
             # fake_mse = calculate_mse_for_image((fake_images, intervals, unsorted_img, sort_bands))
+            
+            ## Unsorted Image Energy
+            unsorted_energy = calculate_energy_unsorted(unsorted_img, intervals)
+            unsorted_energy.sort()
+            unsorted_energy_total = sum(unsorted_energy) / len(unsorted_energy)
 
             ### ENERGY
             # loop over images
@@ -169,13 +174,11 @@ def knn_sort(real, fake, sort, k=5) -> bool:
             for bs in fake_energy:
                 fake_sums.append(sum(bs) / len(bs))
 
-            real_energy_total = sum(real_sums) / len(real_sums)
-            fake_energy_total = sum(fake_sums) / len(fake_sums)
-
-            ## Unsorted Image Energy
-            unsorted_energy = calculate_energy_unsorted(unsorted_img, intervals)
-            unsorted_energy.sort()
-            unsorted_energy_total = sum(unsorted_energy) / len(unsorted_energy)
+            real_sums = sorted(real_sums, key=lambda x: abs(x - unsorted_energy_total))
+            fake_sums = sorted(fake_sums, key=lambda x: abs(x - unsorted_energy_total))
+            
+            real_energy_total = sum(real_sums[:k]) / k
+            fake_energy_total = sum(fake_sums[:k]) / k
 
             print(f"real: {real_energy_total}")
             print(f"fake: {fake_energy_total}")
@@ -273,4 +276,4 @@ def main(path_real, path_fake, path_sort, k):
 
 if __name__ == "__main__":
     print("start")
-    main(PATH_REAL, PATH_FAKE, PATH_SORT, 5)
+    main(PATH_REAL, PATH_FAKE, PATH_SORT, 10)
