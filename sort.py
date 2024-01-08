@@ -6,14 +6,19 @@ from scipy.signal import gaussian
 from skimage import io, color
 from multiprocessing import Pool
 import cv2
+from collections import Counter
+from scipy.spatial import distance
 
-PATH_REAL = './Images/genuine'
-PATH_FAKE = './Images/spoofed'
-PATH_SORT = './Images/sort'
+PATH_REAL = './Images/Data_prepared/PLUS/genuine'
+PATH_FAKE = './Images/Data_prepared/PLUS/spoofed' # './Images/PLUSsynth'
+PATH_SORT = './Images/Data_prepared/PLUS/spoofed'
 
 def mean_squared_error(img1_fft, img2_fft):
     magnitude_difference = np.abs(img1_fft) - np.abs(img2_fft)
     return np.mean(np.square(magnitude_difference))
+
+def band_energy(img_fft):
+    return np.sum(np.square(img_fft))
 
 def apply_bandpass_filter(image, low_cutoff, high_cutoff):
     rows, cols = image.shape
@@ -35,8 +40,14 @@ def apply_bandpass_filter(image, low_cutoff, high_cutoff):
 
 def get_usable_fft(path):
     img = io.imread(path) # load image
+    # check if image is square
+    if img.shape[0] == img.shape[1]:
+        # resize
+        pass
+    
     if len(img.shape) == 3:
         img = color.rgb2gray(img) # make grayscale
+    
     img_fft = fft2(img) # get fourier transform of image
     img_fft_centered = np.abs(fftshift(img_fft)) # shift 0 frequency to center
     return img_fft_centered
@@ -45,14 +56,16 @@ def convert_all_img_dir(path):
     '''returns a dict: key = subject id, value = list of images'''
     out = {} # dictionary (subject id, [images...])
 
-    for filename in os.listdir(path):
-        id = get_subject_id(path, filename)
-        if out.get(id) == None:
-            out[id] = []
-        img = get_usable_fft(os.path.join(path, filename))
-        out.get(id).append(img)
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            if filename != ".DS_Store":
+                id = get_subject_id(root, filename)
+                if out.get(id) == None:
+                    out[id] = []
+                img = get_usable_fft(os.path.join(root, filename))
+                out.get(id).append(img)
     
-    return out    
+    return out
 
 def populate_initial(path_real, path_fake, path_sort):
     # populate lists
@@ -61,20 +74,49 @@ def populate_initial(path_real, path_fake, path_sort):
     sort = convert_all_img_dir(path_sort)
     return real, fake, sort
 
+# def calculate_mse_for_image(args):
+#     i = 0
+#     images, intervals, unsorted_img, sort_bands = args
+#     mse_list = []
+#     for img in images:
+#         for interval in intervals:
+#             band = apply_bandpass_filter(img, interval[0], interval[1])
+#             sort_band = sort_bands[intervals.index(interval)]
+#             mse = mean_squared_error(band, sort_band)
+#             print(f"{i}/{len(images)*len(intervals)}")
+#             i += 1
+#             mse_list.append(mse)
+#     return mse_list
 
-def calculate_mse_for_image(args):
+def calculate_energy_for_image(args):
     i = 0
     images, intervals, unsorted_img, sort_bands = args
-    mse_list = []
+    energy_list = []
     for img in images:
+        bands = []
         for interval in intervals:
             band = apply_bandpass_filter(img, interval[0], interval[1])
-            sort_band = sort_bands[intervals.index(interval)]
-            mse = mean_squared_error(band, sort_band)
-            print(f"{i}/{len(images)*len(intervals)}")
+            energy = band_energy(band)
+            bands.append(energy)
+            ### printing
             i += 1
-            mse_list.append(mse)
-    return mse_list
+            total_bands = len(images) * len(intervals)
+            percentage = (i / total_bands) * 100
+            print(f'\rProcessing {percentage:.2f}%...', end='', flush=True)
+            ###
+        energy_list.append(bands)
+    print("\n")
+    return energy_list
+
+def calculate_energy_unsorted(image, intervals):
+    i = 0
+    energy_list = []
+    for interval in intervals:
+        band = apply_bandpass_filter(image, interval[0], interval[1])
+        energy = band_energy(band)
+        i += 1
+        energy_list.append(energy)
+    return energy_list
 
 def knn_sort(real, fake, sort, k=5) -> bool:
     '''Sorts images into real or fake based on k nearest neighbors, returns true if real false if fake'''
@@ -83,8 +125,6 @@ def knn_sort(real, fake, sort, k=5) -> bool:
     #generate "bands" amount of intervals from 0 to 300
     interval_size = 300 // bands
     intervals = [(i * interval_size, (i+1) * interval_size) for i in range(bands)]
-
-    sort_bands = []
 
     # loop over all subjects in the unsorted images
     for subject_id in sort:
@@ -101,39 +141,93 @@ def knn_sort(real, fake, sort, k=5) -> bool:
 
         # loop over all images to be sorted
         for unsorted_img in sort.get(subject_id):
+            sort_bands = []
             # generate bandpass filters for each interval
             for interval in intervals:
                 sort_band = apply_bandpass_filter(unsorted_img, interval[0], interval[1])
                 sort_bands.append(sort_band)
 
-            #with Pool() as p:
-            #    real_mse = p.map(calculate_mse_for_image, [(img, intervals, unsorted_img, sort_bands) for img in real])
-            #    fake_mse = p.map(calculate_mse_for_image, [(img, intervals, unsorted_img, sort_bands) for img in fake])
+            ### MEAN SQUARED ERROR
+            # #loop over all images
+            # real_mse = calculate_mse_for_image((real_images, intervals, unsorted_img, sort_bands))
+            # fake_mse = calculate_mse_for_image((fake_images, intervals, unsorted_img, sort_bands))
             
-            #loop over all images
-            real_mse = calculate_mse_for_image((real_images, intervals, unsorted_img, sort_bands))
-            fake_mse = calculate_mse_for_image((fake_images, intervals, unsorted_img, sort_bands))
+            ## Unsorted Image Energy
+            unsorted_energy = calculate_energy_unsorted(unsorted_img, intervals)
+            unsorted_energy.sort()
+            unsorted_energy_total = sum(unsorted_energy) / len(unsorted_energy)
 
-            #sort mse lists
-            real_mse.sort()
-            fake_mse.sort()
+            ### ENERGY
+            # loop over images
+            real_energy = calculate_energy_for_image((real_images, intervals, unsorted_img, sort_bands))
+            fake_energy = calculate_energy_for_image((fake_images, intervals, unsorted_img, sort_bands))
+            real_energy.sort()
+            fake_energy.sort()
 
-            # incorrect knn gives correct result
-            # Calculate the average MSE for the real and fake images
-            total_real_mse = sum(real_mse) / len(real_mse)
-            total_fake_mse = sum(fake_mse) / len(fake_mse)
+            ## Avg Energy
+            real_sums = []
+            fake_sums = []
 
-            # Classify the image based on the total MSE
-            if total_real_mse < total_fake_mse:
+            for bs in real_energy: 
+                real_sums.append(sum(bs) / len(bs))
+            
+            for bs in fake_energy:
+                fake_sums.append(sum(bs) / len(bs))
+
+            real_sums = sorted(real_sums, key=lambda x: abs(x - unsorted_energy_total))
+            fake_sums = sorted(fake_sums, key=lambda x: abs(x - unsorted_energy_total))
+            
+            real_energy_total = sum(real_sums[:k]) / k
+            fake_energy_total = sum(fake_sums[:k]) / k
+
+            print(f"real: {real_energy_total}")
+            print(f"fake: {fake_energy_total}")
+            print(f"sort: {unsorted_energy_total}")
+
+            ## Classification
+            diff_real = abs(unsorted_energy_total - real_energy_total)
+            diff_fake = abs(unsorted_energy_total - fake_energy_total)
+
+            if diff_real < diff_fake:
                 if real.get(subject_id) == None:
                     real[subject_id] = []
                 real.get(subject_id).append(unsorted_img)
-                return True  # TODO remove return
+                print("real")
             else:
                 if fake.get(subject_id) == None:
                     fake[subject_id] = []
                 fake.get(subject_id).append(unsorted_img)
-                return False # TODO remove return
+                print("fake")
+    return True
+            
+            #### True knn
+            #label = knn(k, unsorted_energy, real_energy, fake_energy)
+            #if label == 'real':
+            #    if real.get(subject_id) == None:
+            #        real[subject_id] = []
+            #    real.get(subject_id).append(unsorted_img)
+            #    return True
+            #else:
+            #    if fake.get(subject_id) == None:
+            #        fake[subject_id] = []
+            #    fake.get(subject_id).append(unsorted_img)
+            #    return False
+
+#def knn(k, unsorted_energy, real_energy, fake_energy):
+#    # Calculate distances and label them
+#    distances = [(distance.euclidean(unsorted_energy, real), 'real') for real in real_energy]
+#    distances += [(distance.euclidean(unsorted_energy, fake), 'fake') for fake in fake_energy]
+#
+#    # Sort distances
+#    distances.sort(key=lambda x: x[0])
+#    print(distances)
+#    # Get labels of top k elements
+#    labels = [label for _, label in distances[:k]]
+#    print(labels)
+#    # Get most common label
+#    most_common = Counter(labels).most_common(1)[0][0]
+#
+#    return most_common  
 
 def get_subject_id(path, filename):
     ### HOW TO FIND THE SUBJECT ID ###
@@ -142,17 +236,18 @@ def get_subject_id(path, filename):
     # PLUSVein-FV3: [scanner name]_[DORSAL/PALMAR]_[session ID]_[user ID]_[finger ID]_[image ID].png
     subject_id = filename
 
-    if "SCUT" in path:
+    if "SCUT" in path or "SCUT" in filename:
         subject_id = filename.split("_")[0]
         # remove anything before a "-" since sometimes there is a leading 001, 002, etc. follwed by a "-" before the subject id
         subject_id = subject_id.split("-")
         subject_id = subject_id[len(subject_id) - 1]
 
-    elif "IDIAP" in path:
+    elif "IDIAP" in path or "IDIAP" in filename:
         # TODO this one is different in some folders, need to write function to detect which pattern is used
         subject_id = filename.split("_")[2]
-    elif "PLUS" in path:
+    elif "PLUS" in path or "PLUS" in filename:
         subject_id = filename.split("_")[3]
+
 
     return filename # TODO find subject based on path and which dataset is being used.
 
@@ -181,4 +276,4 @@ def main(path_real, path_fake, path_sort, k):
 
 if __name__ == "__main__":
     print("start")
-    main(PATH_REAL, PATH_FAKE, PATH_SORT, 5)
+    main(PATH_REAL, PATH_FAKE, PATH_SORT, 10)
