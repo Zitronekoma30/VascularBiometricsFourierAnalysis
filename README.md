@@ -31,7 +31,7 @@ Bis zum nächsten Mal: eine Datenbank mit synth. vergleichen
 
 ------------------------------------------------------------------------------------------------------
 
-11.12. <br/>
+11.12.\
 Bei quadratischen synthetischen Bildern Größe anpassen (Python Code von Prof)\
 Scikit KNN!\
 Nächster Schritt: LeaveOutOut -> LeaveOneSubjectOut/LeaveOnePersonOut Cross Validation
@@ -45,7 +45,12 @@ Bis 08.01. alle Daten -> Auswertungen
 
 ------------------------------------------------------------------------------------------------------
 
+08.01.\
+Vollstaendige Ergebnisse\
+Einfluss von Anzahl Bändern und k\
+Präsentation bis zum naechsten Mal\
 
+------------------------------------------------------------------------------------------------------
 
 
 
