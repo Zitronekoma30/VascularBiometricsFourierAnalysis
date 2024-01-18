@@ -10,7 +10,7 @@ from collections import Counter
 from scipy.spatial import distance
 
 PATH_REAL = './Images/Data_prepared/PLUS/genuine'
-PATH_FAKE = './Images/Data_prepared/PLUS/spoofed' # './Images/PLUSsynth'
+PATH_FAKE = './Images/PLUSsynth' # './Images/PLUSsynth'
 PATH_SORT = './Images/Data_prepared/PLUS/spoofed'
 
 def mean_squared_error(img1_fft, img2_fft):
@@ -102,7 +102,7 @@ def calculate_energy_for_image(args):
             i += 1
             total_bands = len(images) * len(intervals)
             percentage = (i / total_bands) * 100
-            print(f'\rProcessing {percentage:.2f}%...', end='', flush=True)
+            #print(f'\rProcessing {percentage:.2f}%...', end='', flush=True)
             ###
         energy_list.append(bands)
     print("\n")
@@ -266,8 +266,16 @@ def resize_image(img, img_width, img_height):
 def main(path_real, path_fake, path_sort, k):
     print("converting images")
     real, fake, sort = populate_initial(path_real, path_fake, path_sort)
+    original_fake_amt = len(fake)
+    original_sort_amt = len(sort)
     print("sorting images")
     print(knn_sort(real, fake, sort, k))
+    new_fake_amt = len(fake)
+    correctly_sorted = new_fake_amt - original_fake_amt
+    # write to file
+    with open("results.txt", "a") as f:
+        f.write(f"{correctly_sorted} of {original_sort_amt} images were sorted correctly\n")
+        f.write(f"original fake:{original_fake_amt} \n new fake:{new_fake_amt}\n original sort:{original_sort_amt}\n new fake: {new_fake_amt} \n k:{k} \n correctly sorted: {correctly_sorted}\n")
 
     # TODO implement reversing the process, using the now sorted "sort images"
     # for reference and instead sorting the real and fake images.
@@ -276,4 +284,7 @@ def main(path_real, path_fake, path_sort, k):
 
 if __name__ == "__main__":
     print("start")
+    PATH_REAL = input("Enter path to real images: ")
+    PATH_FAKE = input("Enter path to fake images: ")
+    PATH_SORT = input("Enter path to sort images: ")
     main(PATH_REAL, PATH_FAKE, PATH_SORT, 10)
