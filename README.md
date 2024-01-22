@@ -57,7 +57,7 @@ Balanciert -> Nur Genuine verwenden, die auch in synthetisch/spoofed sind (gleic
 LeaveOneSubjectOut UND LeaveOneOut\
 Schauen in welchen Baendern unterschiede (nicht alle 30 Baender verwenden) -> diese Baender rekonstruieren\
 Ein Band rekonstruieren?\
-Praesentation an Prof schicken
+Praesentation an Prof schicken (nicht erst am letzten Tag)
 
 
 
