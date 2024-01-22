@@ -52,6 +52,14 @@ Präsentation bis zum naechsten Mal\
 
 ------------------------------------------------------------------------------------------------------
 
+22.01.\
+Balanciert -> Nur Genuine verwenden, die auch in synthetisch/spoofed sind (gleich viele)\
+LeaveOneSubjectOut UND LeaveOneOut\
+Schauen in welchen Baendern unterschiede (nicht alle 30 Baender verwenden) -> diese Baender rekonstruieren\
+Ein Band rekonstruieren?\
+Praesentation an Prof schicken
+
+
 
 
 
