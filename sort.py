@@ -93,7 +93,7 @@ def get_usable_fft(path):
     # check if image is square
     if img.shape[0] == img.shape[1]:
         # resize
-        pass
+        img = resize_image(img, 300, 300)
     
     if len(img.shape) == 3:
         img = color.rgb2gray(img) # make grayscale
@@ -246,6 +246,7 @@ def main(path_real, path_fake, path_sort, k, loso):
 
     # write to file
     output = "TEST AT: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "\n"
+    output += f"k: {k} \nloso: {loso}\n"
     output += f"orig fake amt:{original_fake_amt} \nnew fake:{new_fake_amt} \norig real amt:{original_real_amt} \nnew real amt:{new_real_amt} \noriginal sort:{original_sort_amt}\n"
     output += f"fake sorted:{fake_sorted} \nreal sorted:{real_sorted}\n------------------\n"
 
