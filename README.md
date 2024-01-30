@@ -1,3 +1,7 @@
+# Gruppe Fourier Transform
+*Andrassik, Krall*
+
+### Notizen:
 Grundlagen Bildverarbeitung - Besprechungen
 
 Abschlusspräsentation:
