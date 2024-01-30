@@ -91,7 +91,7 @@ def apply_bandpass_filter(image, low_cutoff, high_cutoff):
 def get_usable_fft(path):
     img = io.imread(path) # load image
     # check if image is square
-    if img.shape[0] == img.shape[1]:
+    if img.shape[0] != img.shape[1]:
         # resize
         img = resize_image(img, 300, 300)
     
