@@ -1,6 +1,8 @@
 # Gruppe Fourier Transform
 *Andrassik, Krall*
 
+![comparison](https://github.com/user-attachments/assets/69e38426-d94d-450b-9b4f-3c5657238fd3)
+
 ### Notizen:
 Grundlagen Bildverarbeitung - Besprechungen
 
